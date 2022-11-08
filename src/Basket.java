@@ -99,4 +99,24 @@ public class Basket {
     public long[] getPrices() {
         return prices;
     }
+
+    public void saveBin(File file, Basket basket) {
+        try (FileOutputStream fos = new FileOutputStream(file);
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(basket);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public static Basket loadFromBinFile(File file) {
+        Basket basket = null;
+        try (FileInputStream fis = new FileInputStream(file);
+             ObjectInputStream ois = new ObjectInputStream(fis)) {
+            basket = (Basket) ois.readObject();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return basket;
+    }
 }

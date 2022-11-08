@@ -16,11 +16,12 @@ class Main {
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         File textFile = new File("basket.txt");
+        File file = new File("basket.bin");
         String[] products = {"Хлеб", "Яблоки", "Молоко", "Гречневая крупа"};
         long[] prices = {50, 100, 150, 90};
         Basket basket;
-        if (textFile.exists()) {
-            basket = Basket.loadFromTxtFile(textFile);
+        if (file.exists()) {
+            basket = Basket.loadFromBinFile(file);
             basket.printCart();
         } else {
             System.out.println("Ваша корзина пуста");
@@ -36,7 +37,7 @@ class Main {
             int productNum = Integer.parseInt(inputArr[0]) - 1;
             int amount = Integer.parseInt(inputArr[1]);
             basket.addToCart(productNum, amount);
-            basket.saveTxt(textFile);
+            basket.saveBin(file, basket);
         }
         basket.printCart();
     }
