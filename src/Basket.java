@@ -55,41 +55,25 @@ public class Basket {
     }
 
     public static Basket loadFromTxtFile(File textFile) throws IOException {
-        int i = 0;
-        String[] list0 = new String[0];
-        long[] list1 = new long[0];
-        int[] list2 = new int[0];
+        String[] products = new String[0];
+        long[] prices = new long[0];
+        int[] cart = new int[0];
         try (BufferedReader br = new BufferedReader(new FileReader(textFile))) {
-            String s;
-            while ((s = br.readLine()) != null) {
-                switch (i) {
-                    case 0:
-                        list0 = s.split(",");
-                        i++;
-                        break;
-                    case 1:
-                        String[] list = s.split(" ");
-                        list1 = new long[list.length];
-                        for (int j = 0; j < list.length; j++) {
-                            list1[j] = Long.parseLong(list[j]);
-                        }
-                        i++;
-                        break;
-                    case 2:
-                        list = s.split(" ");
-                        list2 = new int[list.length];
-                        for (int j = 0; j < list.length; j++) {
-                            list2[j] = Integer.parseInt(list[j]);
-                        }
-                        i++;
-                        break;
-                }
-
+            products = br.readLine().split(",");
+            String[] s = br.readLine().split(" ");
+            prices = new long[s.length];
+            for (int i = 0; i < prices.length; i++) {
+                prices[i] = Long.parseLong(s[i]);
+            }
+            s = br.readLine().split(" ");
+            cart = new int[s.length];
+            for (int i = 0; i < cart.length; i++) {
+                cart[i] = Integer.parseInt(s[i]);
             }
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
-        return new Basket(list0, list1, list2);
+        return new Basket(products, prices, cart);
     }
 
     public String[] getProducts() {
