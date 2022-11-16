@@ -1,8 +1,16 @@
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.util.Scanner;
+import java.util.*;
 
 class Main {
     public static void menu(Basket basket) {
@@ -37,19 +45,64 @@ class Main {
         return basket;
     }
 
-    public static void main(String[] args) {
+    public static Map<String, List<String>> getConfig(File file) throws IOException,
+            SAXException, ParserConfigurationException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(file);
+
+        Node root = doc.getDocumentElement();
+        NodeList nodeList = root.getChildNodes();
+
+        Map<String, List<String>> config = new HashMap<>();
+
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node node = nodeList.item(i);
+            if (Node.ELEMENT_NODE == node.getNodeType()) {
+                Element element = (Element) node;
+                NodeList subNodeList = element.getChildNodes();
+                List<String> param = new ArrayList<>();
+                for (int j = 0; j < subNodeList.getLength(); j++) {
+                    Node subNode = subNodeList.item(j);
+                    if (Node.ELEMENT_NODE == subNode.getNodeType()) {
+                        param.add(subNode.getTextContent());
+                    }
+                }
+                config.put(element.getTagName(), param);
+            }
+        }
+        return config;
+    }
+
+    public static void main(String[] args) throws IOException,
+            ParserConfigurationException, SAXException {
         Scanner scanner = new Scanner(System.in);
 
-        File clientLogFile = new File("log.csv");
-        File fileJson = new File("basket.json");
+        File fileConfig = new File("shop.xml");
 
         String[] products = {"Хлеб", "Яблоки", "Молоко", "Гречневая крупа"};
         long[] prices = {50, 100, 150, 90};
+
         Basket basket;
         ClientLog clientLog = new ClientLog();
 
-        if (fileJson.exists()) {
-            basket = fromJson(fileJson);
+        Map<String, List<String>> config = getConfig(fileConfig);
+        int indexEnabled = 0;
+        int indexFileName = 1;
+        int indexFormat = 2;
+        boolean paramLoad = config.get("load").get(indexEnabled).equals("true");
+        boolean paramSave = config.get("save").get(indexEnabled).equals("true");
+        boolean paramLog = config.get("log").get(indexEnabled).equals("true");
+        String formatLoad = config.get("load").get(indexFormat);
+        String formatSave = config.get("save").get(indexFormat);
+
+        if (paramLoad) {
+            File fileLoad = new File(config.get("load").get(indexFileName));
+            if (formatLoad.equals("json")) {
+                basket = fromJson(fileLoad);
+            } else {
+                basket = Basket.loadFromTxtFile(fileLoad);
+            }
             basket.printCart();
         } else {
             System.out.println("Ваша корзина пуста");
@@ -64,13 +117,23 @@ class Main {
             String[] inputArr = input.split(" ");
             int productNum = Integer.parseInt(inputArr[0]) - 1;
             int amount = Integer.parseInt(inputArr[1]);
-            basket.addToCart(productNum, amount);
 
+            basket.addToCart(productNum, amount);
             clientLog.log(productNum, amount);
-            toJson(fileJson, basket);
+
+            if (paramSave) {
+                File fileBasket = new File(config.get("save").get(indexFileName));
+                if (formatSave.equals("json")) {
+                    toJson(fileBasket, basket);
+                } else {
+                    basket.saveTxt(fileBasket);
+                }
+            }
+        }
+        if (paramLog) {
+            File fileLog = new File(config.get("log").get(indexFileName));
+            clientLog.exportAsCSV(fileLog);
         }
         basket.printCart();
-
-        clientLog.exportAsCSV(clientLogFile);
     }
 }
