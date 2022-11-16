@@ -1,8 +1,12 @@
 # будут игнорироваться файлы
 *.iml
 *.idea
+basket.json
 basket.txt
+basket.bin
+client.csv
+log.csv
 
-# будет игнорироваться каталоги out, target
+# будут игнорироваться каталоги
 out/
 target/

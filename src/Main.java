@@ -1,5 +1,7 @@
-import java.io.File;
-import java.io.IOException;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.*;
 import java.util.Scanner;
 
 class Main {
@@ -13,14 +15,41 @@ class Main {
         System.out.println("Выберите товар и количество или введите `end`");
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void toJson(File fileJson, Basket basket) {
+        try (Writer writer = new FileWriter(fileJson)) {
+            GsonBuilder builder = new GsonBuilder();
+            Gson gson = builder.create();
+            gson.toJson(basket, writer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Basket fromJson(File fileJson) {
+        Basket basket = null;
+        try (BufferedReader br = new BufferedReader(new FileReader(fileJson))) {
+            GsonBuilder builder = new GsonBuilder();
+            Gson gson = builder.create();
+            basket = gson.fromJson(br, Basket.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return basket;
+    }
+
+    public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        File textFile = new File("basket.txt");
+
+        File clientLogFile = new File("log.csv");
+        File fileJson = new File("basket.json");
+
         String[] products = {"Хлеб", "Яблоки", "Молоко", "Гречневая крупа"};
         long[] prices = {50, 100, 150, 90};
         Basket basket;
-        if (textFile.exists()) {
-            basket = Basket.loadFromTxtFile(textFile);
+        ClientLog clientLog = new ClientLog();
+
+        if (fileJson.exists()) {
+            basket = fromJson(fileJson);
             basket.printCart();
         } else {
             System.out.println("Ваша корзина пуста");
@@ -36,8 +65,12 @@ class Main {
             int productNum = Integer.parseInt(inputArr[0]) - 1;
             int amount = Integer.parseInt(inputArr[1]);
             basket.addToCart(productNum, amount);
-            basket.saveTxt(textFile);
+
+            clientLog.log(productNum, amount);
+            toJson(fileJson, basket);
         }
         basket.printCart();
+
+        clientLog.exportAsCSV(clientLogFile);
     }
 }
